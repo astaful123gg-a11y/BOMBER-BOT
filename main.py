@@ -1,13 +1,13 @@
-# =====
 # ============================================================
-# 🔥 ULTRA BOMBER BOT — POLLING MODE 🔥
+# 🔥 ULTRA BOMBER BOT — RENDER READY 🔥
 # ============================================================
-# ✅ NO FLASK — Sirf polling
-# ✅ NO WEBHOOK — Direct getUpdates
-# ✅ Runs on Railway, Termux, Render
-# ✅ Full features: APIs, Broadcast, Admin Panel
+# ✅ FLASK + POLLING HYBRID — Render port detect karega
+# ✅ FULL UI — Bold + Quote + Premium Emojis
+# ✅ BROADCAST — Sab working
+# ✅ APIs — Add/Remove/List
 # ============================================================
 
+from flask import Flask, request, jsonify
 import requests
 import json
 import time
@@ -16,8 +16,10 @@ import os
 import secrets
 from datetime import datetime, timedelta
 
+app = Flask(__name__)
+
 # ====== CONFIG ======
-BOT_TOKEN = "8643322725:AAE-SZND4HpuYyAhYF-u0fCUPdqu49p85HE"  # <-- NAYA TOKEN DAALO
+BOT_TOKEN = "8643322725:AAE-SZND4HpuYyAhYF-u0fCUPdqu49p85HE"  # <-- NAYA TOKEN
 OWNER_ID = "8600328303"
 MAX_BOMB_DURATION = 300  # 5 minutes
 
@@ -292,17 +294,9 @@ def handle_help(chat_id):
         reply_markup=main_keyboard()
     )
 
-# ====== MAIN POLLING LOOP ======
-def main():
-    print("="*50)
-    print("🔥 ULTRA BOMBER BOT STARTED!")
-    print(f"📡 APIs: {len(API_DB)}")
-    print(f"👑 Owner: {OWNER_ID}")
-    print(f"⏰ Max Duration: {MAX_BOMB_DURATION}s")
-    print("="*50)
-    print("💀 Bot is running...")
-    print("🛑 Press CTRL+C to stop\n")
-    
+# ====== POLLING THREAD ======
+def polling_loop():
+    print("💀 Polling loop started...")
     last_update_id = 0
     
     while True:
@@ -332,7 +326,7 @@ def main():
                     
                     elif data == "addapi":
                         if str(chat_id) == OWNER_ID:
-                            handle_setapi(chat_id)
+                            send_message(chat_id, f"{bold('➕ Send API details')}\n\n{quote('Format: name=MyAPI url=https://api.com')}", reply_markup=admin_keyboard())
                     
                     elif data == "back_apis":
                         handle_apis(chat_id)
@@ -373,9 +367,9 @@ def main():
                                 success, msg = add_api(api_data)
                                 send_message(chat_id, f"{bold('✅' if success else '❌')} {msg}", reply_markup=admin_keyboard())
                             else:
-                                send_message(chat_id, f"{bold('❌ Invalid format!')}", reply_markup=admin_keyboard())
+                                send_message(chat_id, f"{bold('❌ Invalid format!')}\n\n{quote('Use: name=MyAPI url=https://api.com')}", reply_markup=admin_keyboard())
                         else:
-                            handle_setapi(chat_id)
+                            send_message(chat_id, f"{bold('➕ Send API details')}\n\n{quote('Format: name=MyAPI url=https://api.com')}", reply_markup=admin_keyboard())
                     else:
                         send_message(chat_id, f"{bold('❌ Access Denied!')}")
                 
@@ -405,26 +399,46 @@ def main():
             
             time.sleep(1)
             
-        except KeyboardInterrupt:
-            print("\n🛑 Bot stopped by user!")
-            break
         except Exception as e:
             print(f"❌ Error: {e}")
             time.sleep(5)
 
-def handle_setapi(chat_id):
-    send_message(chat_id,
-        f"{bold('➕ ADD API')}\n\n"
-        f"{quote('Send: /setapi name=MyAPI url=https://api.com')}",
-        reply_markup=api_set_inline()
-    )
-
-def api_set_inline():
+# ====== FLASK ENDPOINTS ======
+@app.route('/')
+def home():
     return {
-        "inline_keyboard": [
-            [{"text": "🔙 Back", "callback_data": "back_apis"}]
-        ]
+        "status": "🔥 ULTRA BOMBER BOT 🔥",
+        "owner": OWNER_ID,
+        "apis": len(API_DB),
+        "users": len(user_db),
+        "active_sessions": len(active_sessions)
     }
 
+@app.route('/health')
+def health():
+    return jsonify({
+        "status": "healthy",
+        "bot": "Ultra Bomber Bot",
+        "apis": len(API_DB),
+        "users": len(user_db),
+        "active_sessions": len(active_sessions),
+        "owner": OWNER_ID
+    })
+
+# ====== START ======
 if __name__ == "__main__":
-    main()
+    print("="*50)
+    print("🔥 ULTRA BOMBER BOT STARTED!")
+    print(f"📡 APIs: {len(API_DB)}")
+    print(f"👑 Owner: {OWNER_ID}")
+    print(f"⏰ Max Duration: {MAX_BOMB_DURATION}s")
+    print("="*50)
+    
+    # Start polling in background
+    polling_thread = threading.Thread(target=polling_loop)
+    polling_thread.daemon = True
+    polling_thread.start()
+    
+    # Start Flask server
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
