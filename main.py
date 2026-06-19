@@ -17,7 +17,7 @@ import secrets
 app = Flask(__name__)
 
 # ====== CONFIG ======
-BOT_TOKEN = "8643322725:AAE-SZND4HpuYyAhYF-u0fCUPdqu49p85HE"
+BOT_TOKEN = "8643322725:AAFJtoQ6p3qupdVV8VxG6eQGtNMqWsw_eHw"
 OWNER_ID = "8600328303"
 MAX_BOMB_DURATION = 300
 
