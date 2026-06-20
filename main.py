@@ -1,12 +1,10 @@
 # ============================================================
-# 🔥 ULTRA BOMBER BOT 🔥
+# 🔥 ULTRA BOMBER BOT — FINAL FIXED 🔥
 # ============================================================
-# ✅ BROADCAST — TERA CODE (copy_message)
-# ✅ NO PREMIUM EMOJIS
-# ✅ Admin panel — ONLY OWNER
-# ✅ Direct number input
+# ✅ API button — SIRF ADMIN
+# ✅ Admin Panel button — SIRF ADMIN
+# ✅ /help — Admin commands hidden
 # ✅ Stop hote sirf "BOMBING STOPPED!"
-# ✅ Speed: 0.005s — Threads: 50
 # ============================================================
 
 from flask import Flask, request, jsonify
@@ -20,7 +18,7 @@ import secrets
 app = Flask(__name__)
 
 # ====== CONFIG ======
-BOT_TOKEN = "8643322725:AAGxCjTiO7nHaIuIALUbNIzQv8th1Q-oT9Y"
+BOT_TOKEN = "8643322725:AAFJtoQ6p3qupdVV8VxG6eQGtNMqWsw_eHw"
 OWNER_ID = "8600328303"
 MAX_BOMB_DURATION = 300
 THREADS = 50
@@ -84,10 +82,11 @@ def get_updates(offset=None):
 def main_keyboard(chat_id):
     keyboard = [
         ["💀 Start Bombing", "🛑 Stop Bombing"],
-        ["📡 APIs", "ℹ️ Help"]
+        ["ℹ️ Help"]
     ]
+    # API button + Admin Panel — SIRF ADMIN
     if str(chat_id) == OWNER_ID:
-        keyboard.append(["👑 Admin Panel"])
+        keyboard.append(["📡 APIs", "👑 Admin Panel"])
     return {
         "keyboard": keyboard,
         "resize_keyboard": True,
@@ -239,12 +238,16 @@ def handle_start(chat_id):
         f"📡 {bold('APIs:')} {len(API_DB)}\n"
         f"⚡ {bold('Threads:')} {THREADS}\n"
         f"⏱️  {bold('Delay:')} {DELAY}s\n"
-        f"⏰ {bold('Max:')} 5 min\n"
-        f"👑 {bold('Owner:')} {code(OWNER_ID)}",
+        f"⏰ {bold('Max:')} 5 min",
         reply_markup=main_keyboard(chat_id)
     )
 
 def handle_apis(chat_id):
+    # Sirf admin ke liye
+    if str(chat_id) != OWNER_ID:
+        send_message(chat_id, f"{bold('❌ ACCESS DENIED!')}", reply_markup=main_keyboard(chat_id))
+        return
+    
     text = f"{bold('📡 ALL APIS')}\n\n"
     for idx, api in enumerate(API_DB):
         text += f"{idx+1}. {bold(api['name'])}\n{code(api['url'])}\n\n"
@@ -298,7 +301,7 @@ def handle_admin_panel(chat_id):
         reply_markup=admin_keyboard()
     )
 
-# ====== BROADCAST (TERA CODE) ======
+# ====== BROADCAST ======
 def handle_broadcast(chat_id):
     if str(chat_id) != OWNER_ID:
         send_message(chat_id, f"{bold('❌ ACCESS DENIED!')}", reply_markup=main_keyboard(chat_id))
@@ -345,7 +348,6 @@ def handle_broadcast_reply(chat_id, reply_to_message):
                 user_db.discard(chat)
         time.sleep(0.05)
     
-    save_users()
     send_message(chat_id,
         f"{bold('✅ BROADCAST COMPLETED!')}\n\n"
         f"✅ {bold('Sent:')} {sent}\n"
@@ -354,32 +356,20 @@ def handle_broadcast_reply(chat_id, reply_to_message):
     )
 
 def handle_help(chat_id):
-    send_message(chat_id,
-        f"{bold('ℹ️ HELP')}\n\n"
-        f"💀 {bold('Start Bombing:')} Click the button\n"
-        f"🛑 {bold('Stop Bombing:')} Click the button\n"
-        f"📡 {bold('APIs:')} /apis\n"
-        f"👑 {bold('Admin:')} /broadcast (reply to any message)\n"
-        f"➕ {bold('Add API:')} /setapi name=MyAPI url=https://api.com",
-        reply_markup=main_keyboard(chat_id)
-    )
-
-# ====== SAVE USERS ======
-def save_users():
-    try:
-        with open("users.json", "w") as f:
-            json.dump(list(user_db), f)
-    except:
-        pass
-
-def load_users():
-    try:
-        with open("users.json", "r") as f:
-            data = json.load(f)
-            for user in data:
-                user_db.add(user)
-    except:
-        pass
+    # Normal user — No admin commands
+    text = f"{bold('ℹ️ HELP')}\n\n"
+    text += f"💀 {bold('Start Bombing:')} Click the button\n"
+    text += f"🛑 {bold('Stop Bombing:')} Click the button\n"
+    
+    # Admin commands — ONLY for owner
+    if str(chat_id) == OWNER_ID:
+        text += f"\n{bold('👑 Admin Commands:')}\n"
+        text += f"📡 {bold('APIs:')} /apis\n"
+        text += f"📢 {bold('Broadcast:')} Reply to any message with /broadcast\n"
+        text += f"➕ {bold('Add API:')} /setapi name=MyAPI url=https://api.com\n"
+        text += f"🗑️ {bold('Remove API:')} /removeapi\n"
+    
+    send_message(chat_id, text, reply_markup=main_keyboard(chat_id))
 
 # ====== POLLING LOOP ======
 def polling_loop():
@@ -505,7 +495,6 @@ if __name__ == "__main__":
     print(f"📡 APIs: {len(API_DB)}")
     print(f"👑 Owner: {OWNER_ID}")
     
-    load_users()
     threading.Thread(target=polling_loop, daemon=True).start()
     
     port = int(os.environ.get("PORT", 5000))
